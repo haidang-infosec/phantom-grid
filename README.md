@@ -40,7 +40,7 @@ graph TD
         TC[eBPF TC Hook] -->|Egress| NIC
     end
 
-    subgraph User Space (Phantom Agent)
+    subgraph User Space
         Pass --> Auth[SPA Authenticator]
         Auth -->|Valid Signature| MapUpdate[Update eBPF Maps]
         Redirect --> HP[Internal Honeypot]
