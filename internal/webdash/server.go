@@ -69,6 +69,7 @@ func (s *Server) Start() {
 	mux.HandleFunc("/api/fleet/telemetry", s.handleFleetTelemetry)
 	mux.HandleFunc("/api/fleet/logs", s.handleFleetLogs)
 	mux.HandleFunc("/api/fleet/agents", s.handleGetAgents)
+	mux.HandleFunc("/api/fleet/provision", s.handleProvisionAccess)
 
 	// Serve static files from embedded FS
 	fs := http.FileServer(http.FS(uiFS))

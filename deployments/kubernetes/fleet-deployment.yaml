@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phantom-grid-fleet
+  namespace: kube-system
+  labels:
+    app: phantom-grid
+    component: fleet-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phantom-grid
+      component: fleet-manager
+  template:
+    metadata:
+      labels:
+        app: phantom-grid
+        component: fleet-manager
+    spec:
+      containers:
+      - name: fleet-manager
+        image: phantom-grid:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/app/phantom-grid"]
+        args: ["--fleet", "--port", "9999"]
+        ports:
+        - containerPort: 9999
+          name: web
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        emptyDir: {}

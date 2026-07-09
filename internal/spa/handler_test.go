@@ -72,7 +72,7 @@ func TestProcessPacket_ValidAsymmetric(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestProcessPacket_InvalidSignature(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}

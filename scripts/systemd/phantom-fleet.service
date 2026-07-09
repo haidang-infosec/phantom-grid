@@ -1,0 +1,15 @@
+[Unit]
+Description=Phantom Grid Fleet Manager
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/phantom
+ExecStart=/usr/local/bin/fleet
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

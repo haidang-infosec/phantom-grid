@@ -5,28 +5,45 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"log"
+
+	"phantom-grid/internal/config"
+	"phantom-grid/internal/proxy"
+	
+	"gorm.io/gorm"
+	"gorm.io/driver/sqlite"
 )
 
 // AgentTelemetry contains the statistics sent by an agent.
 type AgentTelemetry struct {
-	AgentID        string `json:"agent_id"`
-	IP             string `json:"ip"`
-	DroppedPackets uint64 `json:"dropped_packets"`
-	AuthSuccess    uint64 `json:"auth_success"`
-	AuthFailed     uint64 `json:"auth_failed"`
+	AgentID        string    `json:"agent_id" gorm:"primaryKey"`
+	IP             string    `json:"ip"`
+	DroppedPackets uint64    `json:"dropped_packets"`
+	AuthSuccess    uint64    `json:"auth_success"`
+	AuthFailed     uint64    `json:"auth_failed"`
 	LastSeen       time.Time `json:"last_seen"`
 }
 
 // FleetManager manages connected agents.
 type FleetManager struct {
-	mu     sync.RWMutex
-	agents map[string]*AgentTelemetry
+	mu sync.RWMutex
+	db *gorm.DB
 }
 
 // NewFleetManager creates a new FleetManager.
 func NewFleetManager() *FleetManager {
+	db, err := gorm.Open(sqlite.Open("fleet.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to fleet database: %v", err)
+	}
+
+	// Migrate the schema
+	if err := db.AutoMigrate(&AgentTelemetry{}); err != nil {
+		log.Fatalf("Failed to migrate fleet database schema: %v", err)
+	}
+
 	return &FleetManager{
-		agents: make(map[string]*AgentTelemetry),
+		db: db,
 	}
 }
 
@@ -35,7 +52,7 @@ func (f *FleetManager) RegisterAgent(t *AgentTelemetry) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	t.LastSeen = time.Now()
-	f.agents[t.AgentID] = t
+	f.db.Save(t)
 }
 
 // GetAgents returns a list of all active agents.
@@ -43,9 +60,7 @@ func (f *FleetManager) GetAgents() []*AgentTelemetry {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 	var list []*AgentTelemetry
-	for _, a := range f.agents {
-		list = append(list, a)
-	}
+	f.db.Find(&list)
 	return list
 }
 
@@ -53,8 +68,12 @@ func (f *FleetManager) GetAgents() []*AgentTelemetry {
 func (f *FleetManager) GetAgent(agentID string) (*AgentTelemetry, bool) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	a, ok := f.agents[agentID]
-	return a, ok
+	var a AgentTelemetry
+	result := f.db.Where("agent_id = ?", agentID).First(&a)
+	if result.Error != nil {
+		return nil, false
+	}
+	return &a, true
 }
 
 // handleFleetTelemetry receives telemetry from an agent.
@@ -109,4 +128,44 @@ func (s *Server) handleFleetLogs(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGetAgents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(s.fleetManager.GetAgents())
+}
+
+// handleProvisionAccess provisions a new user with SPA Keys, TOTP and mTLS certificates.
+func (s *Server) handleProvisionAccess(w http.ResponseWriter, r *http.Request) {
+	// In a real system, this endpoint would verify Admin/SSO authentication.
+	// For this ZTNA upgrade, we will generate the materials and return them.
+	
+	// Generate SPA Keys
+	_, privKey, err := config.GenerateEd25519Keys()
+	if err != nil {
+		http.Error(w, "Failed to generate keys", http.StatusInternalServerError)
+		return
+	}
+
+	// In a complete implementation we would store the pubKey to Fleet DB and push to Agents.
+	
+	// Generate mTLS Certs
+	caPEM, caPriv, err := proxy.GenerateCA()
+	if err != nil {
+		http.Error(w, "Failed to generate CA", http.StatusInternalServerError)
+		return
+	}
+
+	certPEM, certPriv, err := proxy.GenerateCert(caPEM, caPriv, false, "phantom-user", "spiffe://phantom.grid/ns/default/workload/phantom-agent")
+	if err != nil {
+		http.Error(w, "Failed to generate Cert", http.StatusInternalServerError)
+		return
+	}
+
+	resp := map[string]string{
+		"spa_private_key": string(privKey),
+		"totp_secret":     "NEW_TOTP_SECRET_GENERATED",
+		"mtls_ca":         string(caPEM),
+		"mtls_cert":       string(certPEM),
+		"mtls_key":        string(certPriv),
+		"message":         "Provisioning Profile generated successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

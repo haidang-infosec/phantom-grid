@@ -29,7 +29,7 @@ func TestNewDynamicClient_AsymmetricMode(t *testing.T) {
 	spaConfig.TOTPSecret = totpSecret
 
 	// Create client
-	client, err := NewDynamicClient("127.0.0.1", spaConfig)
+	client, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestNewDynamicClient_DynamicMode(t *testing.T) {
 	spaConfig.TOTPSecret = totpSecret
 
 	// Create client
-	client, err := NewDynamicClient("127.0.0.1", spaConfig)
+	client, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestNewDynamicClient_MissingPrivateKey(t *testing.T) {
 	spaConfig.PrivateKey = nil // Missing private key
 
 	// Create client - should fail
-	_, err := NewDynamicClient("127.0.0.1", spaConfig)
+	_, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for missing private key")
 	}
@@ -95,7 +95,7 @@ func TestNewDynamicClient_MissingHMACSecret(t *testing.T) {
 	spaConfig.HMACSecret = nil // Missing HMAC secret
 
 	// Create client - should fail
-	_, err := NewDynamicClient("127.0.0.1", spaConfig)
+	_, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for missing HMAC secret")
 	}
@@ -107,7 +107,7 @@ func TestNewDynamicClient_UnsupportedMode(t *testing.T) {
 	spaConfig.Mode = config.SPAMode("unsupported")
 
 	// Create client - should fail
-	_, err := NewDynamicClient("127.0.0.1", spaConfig)
+	_, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for unsupported mode")
 	}
@@ -146,7 +146,7 @@ func TestSendMagicPacket_AsymmetricMode(t *testing.T) {
 	spaConfig.TOTPSecret = totpSecret
 
 	// Create client with server port
-	client, err := NewDynamicClient("127.0.0.1", spaConfig)
+	client, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -226,7 +226,7 @@ func TestSendMagicPacket_DynamicMode(t *testing.T) {
 	spaConfig.TOTPSecret = totpSecret
 
 	// Create client
-	client, err := NewDynamicClient("127.0.0.1", spaConfig)
+	client, err := NewDynamicClient("127.0.0.1", spaConfig, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}

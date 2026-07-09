@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"flag"
 	"fmt"
 	"log"
@@ -50,7 +51,7 @@ func main() {
 
 	// Create client
 	fmt.Printf("Creating SPA client for server %s...\n", *serverIP)
-	client, err := spa.NewDynamicClient(*serverIP, spaConfig)
+	client, err := spa.NewDynamicClient(*serverIP, spaConfig, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}

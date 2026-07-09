@@ -15,16 +15,16 @@ generate: generate-config
 
 build: generate
 	@mkdir -p bin
-	cd cmd/agent && go build -o ../../bin/phantom-grid .
-	cd cmd/fleet && go build -o ../../bin/fleet .
-	cd cmd/spa-client && go build -o ../../bin/spa-client .
-	cd cmd/phantom && go build -o ../../bin/phantom .
+	cd cmd/agent && go build -buildvcs=false -o ../../bin/phantom-grid .
+	cd cmd/fleet && go build -buildvcs=false -o ../../bin/fleet .
+	cd cmd/spa-client && go build -buildvcs=false -o ../../bin/spa-client .
+	cd cmd/phantom && go build -buildvcs=false -o ../../bin/phantom .
 	@echo "Build complete: binaries in bin/"
 
 # Build client only (for client machines - no eBPF dependencies needed)
 build-client:
 	@mkdir -p bin
-	cd cmd/spa-client && go build -o ../../bin/spa-client .
+	cd cmd/spa-client && go build -buildvcs=false -o ../../bin/spa-client .
 	@echo "Client build complete: bin/spa-client"
 
 run: build
@@ -62,5 +62,7 @@ test-coverage: generate
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
-.PHONY: all generate-config generate build build-client run run-interface clean deps fmt lint test test-coverage
+package: build
+	./scripts/build_deb.sh
 
+.PHONY: all generate-config generate build build-client run run-interface clean deps fmt lint test test-coverage package

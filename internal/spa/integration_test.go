@@ -34,13 +34,13 @@ func TestSPAAuthenticationFlow_Asymmetric(t *testing.T) {
 	serverVerifier := NewVerifier(serverConfig)
 
 	// Create client-side packet
-	clientPacket, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	clientPacket, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client packet: %v", err)
 	}
 
 	// Server verifies packet
-	valid, err := serverVerifier.VerifyPacket(clientPacket)
+	valid, err := serverVerifier.VerifyPacket(clientPacket, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Server verification failed: %v", err)
 	}
@@ -98,13 +98,13 @@ func TestSPAAuthenticationFlow_Dynamic(t *testing.T) {
 	serverVerifier := NewVerifier(serverConfig)
 
 	// Create client-side packet
-	clientPacket, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true)
+	clientPacket, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client packet: %v", err)
 	}
 
 	// Server verifies packet
-	valid, err := serverVerifier.VerifyPacket(clientPacket)
+	valid, err := serverVerifier.VerifyPacket(clientPacket, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Server verification failed: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestSPAReplayProtection(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create first packet
-	packet1, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packet1, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -148,7 +148,7 @@ func TestSPAReplayProtection(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Create second packet (should be different due to TOTP)
-	packet2, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packet2, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -178,8 +178,8 @@ func TestSPAReplayProtection(t *testing.T) {
 
 	verifier := NewVerifier(serverConfig)
 
-	valid1, err1 := verifier.VerifyPacket(packet1)
-	valid2, err2 := verifier.VerifyPacket(packet2)
+	valid1, err1 := verifier.VerifyPacket(packet1, net.ParseIP("192.168.1.100"))
+	valid2, err2 := verifier.VerifyPacket(packet2, net.ParseIP("192.168.1.100"))
 
 	if err1 != nil {
 		t.Errorf("First packet verification error: %v", err1)
@@ -233,7 +233,7 @@ func TestSPAClientServerIntegration(t *testing.T) {
 	serverVerifier := NewVerifier(serverConfig)
 
 	// Client creates and sends packet
-	clientPacket, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	clientPacket, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create client packet: %v", err)
 	}
@@ -267,7 +267,7 @@ func TestSPAClientServerIntegration(t *testing.T) {
 
 	// Verify packet
 	receivedPacket := buffer[:n]
-	valid, err := serverVerifier.VerifyPacket(receivedPacket)
+	valid, err := serverVerifier.VerifyPacket(receivedPacket, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Server verification failed: %v", err)
 	}
@@ -327,12 +327,12 @@ func TestSPAPacketObfuscation(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create packets with obfuscation
-	packet1, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packet1, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
 
-	packet2, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packet2, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -361,7 +361,7 @@ func TestSPAPacketObfuscation(t *testing.T) {
 
 	// Packets should have different padding (high probability)
 	// Extract padding
-	headerSize := SPAPacketHeaderSize
+	headerSize := SPAPacketHeaderSizeV2
 	sigSize := Ed25519SignatureSize
 
 	if len(packet1) > headerSize+sigSize && len(packet2) > headerSize+sigSize {

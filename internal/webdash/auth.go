@@ -68,9 +68,7 @@ func NewAuthManager(usersFile string) *AuthManager {
 }
 
 func (am *AuthManager) loadUsers() {
-	am.mu.Lock()
-	defer am.mu.Unlock()
-
+	// Not locking here to prevent deadlocks during initialization
 	data, err := os.ReadFile(am.usersFile)
 	if err != nil {
 		return

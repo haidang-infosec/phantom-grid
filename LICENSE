@@ -1,6 +1,9 @@
-MIT License
+PHANTOM GRID LICENSE AGREEMENT
 
-Copyright (c) 2025 Mai Hai Dang
+This project is licensed under a Dual License (Open Core) model.
+
+1. OPEN SOURCE CORE (MIT LICENSE)
+The core eBPF packet filtering modules and basic Single Packet Authorization (SPA) components are licensed under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -11,6 +14,21 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+2. ENTERPRISE FEATURES (COMMERCIAL LICENSE)
+The Enterprise Features are proprietary and closed-source for commercial use. These features include, but are not limited to:
+- Fleet Manager and Key Distribution Center (KDC)
+- mTLS Identity Proxy and Advanced L7 routing
+- Persistent SQLite/PostgreSQL Database Integration
+- Web UI Dashboard and Client GUI
+- Enterprise Packaging Scripts (.deb, Systemd)
+
+You may view, evaluate, and modify the source code of the Enterprise Features for personal, non-commercial, or educational purposes only. 
+
+COMMERCIAL USE RESTRICTION:
+You may not use, deploy, or distribute the Enterprise Features in a commercial or production environment without obtaining a valid commercial license from the Phantom Grid team. "Commercial use" includes any use by a business, corporation, government entity, or use intended to generate revenue.
+
+For commercial licensing inquiries, please contact the sales team at sales@phantomgrid.io.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

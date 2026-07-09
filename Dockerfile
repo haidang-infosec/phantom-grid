@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     libbpf-dev \
     make \
     git \
+    gcc-multilib \
+    linux-libc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build

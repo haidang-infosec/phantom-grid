@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"flag"
 	"fmt"
 	"log"
@@ -12,6 +13,7 @@ import (
 
 	"phantom-grid/internal/agent"
 	"phantom-grid/internal/config"
+	"phantom-grid/internal/proxy"
 	"phantom-grid/internal/webdash"
 )
 
@@ -45,7 +47,7 @@ func main() {
 	elkSkipVerifyFlag := flag.Bool("elk-skip-verify", false, "Skip TLS certificate verification")
 	
 	// Fleet Configuration
-	fleetUrlFlag := flag.String("fleet-url", "", "URL of the central Fleet Manager (e.g. http://10.0.0.1:8080). If set, Web Dashboard runs in Agent mode.")
+	fleetUrlFlag := flag.String("fleet-url", "", "URL of the central Fleet Manager (e.g. http://10.0.0.1:9999). If set, Web Dashboard runs in Agent mode.")
 	agentIdFlag := flag.String("agent-id", "Phantom-Node-Alpha", "Unique ID for this agent in the Fleet")
 	
 	// SPA Configuration flags
@@ -53,6 +55,15 @@ func main() {
 	spaKeyDirFlag := flag.String("spa-key-dir", "./keys", "Directory containing SPA keys")
 	spaTOTPSecretFlag := flag.String("spa-totp-secret", "", "TOTP secret (base64 encoded, 32 bytes). If not provided, auto-loads from keys/totp_secret.txt")
 	spaStaticTokenFlag := flag.String("spa-static-token", "", "Static SPA token (for static mode). If not provided, will prompt or use default")
+	
+	// mTLS Proxy Configuration flags
+	mtlsEnableFlag := flag.Bool("mtls", false, "Enable mTLS Identity Proxy")
+	mtlsPortFlag := flag.Int("mtls-port", 8443, "mTLS Proxy listening port")
+	mtlsTargetFlag := flag.Int("mtls-target", 22, "mTLS Proxy target port (e.g. SSH)")
+	mtlsCaFlag := flag.String("mtls-ca", "./keys/ca.crt", "Path to CA certificate")
+	mtlsCertFlag := flag.String("mtls-cert", "./keys/server.crt", "Path to Server certificate")
+	mtlsKeyFlag := flag.String("mtls-key", "./keys/server.key", "Path to Server private key")
+	mtlsAllowedSpiffeFlag := flag.String("mtls-allowed-spiffe-ids", "", "Comma-separated list of allowed SPIFFE IDs (e.g., spiffe://phantom.grid/backend-api)")
 	
 	// Help flag
 	helpFlag := flag.Bool("h", false, "Show help message")
@@ -150,7 +161,7 @@ func main() {
 				log.Printf("[!] Please ensure keys are generated: go run ./cmd/spa-keygen -dir %s", *spaKeyDirFlag)
 				log.Fatalf("[!] Cannot start in asymmetric mode without public key")
 			}
-			spaConfig.PublicKey = publicKey
+			spaConfig.PublicKeys = []ed25519.PublicKey{publicKey}
 			log.Printf("[SPA] Public key loaded from %s", publicKeyPath)
 		}
 		
@@ -168,7 +179,7 @@ func main() {
 				if totpSecretData, err := os.ReadFile(totpSecretPath); err == nil {
 					// Remove newline and null bytes if present
 					totpSecretData = bytes.TrimRight(totpSecretData, "\n\r\x00")
-					spaConfig.TOTPSecret = totpSecretData
+					spaConfig.TOTPSecrets = [][]byte{totpSecretData}
 					log.Printf("[SPA] TOTP secret loaded from file: %s", totpSecretPath)
 				} else {
 					log.Printf("[!] Warning: TOTP secret not found at %s, using default (may cause authentication failures)", totpSecretPath)
@@ -190,6 +201,35 @@ func main() {
 		log.Fatalf("[!] Failed to start agent: %v", err)
 	}
 
+	// Start mTLS Proxy if enabled
+	if *mtlsEnableFlag {
+		caCert, err1 := os.ReadFile(*mtlsCaFlag)
+		srvCert, err2 := os.ReadFile(*mtlsCertFlag)
+		srvKey, err3 := os.ReadFile(*mtlsKeyFlag)
+		
+		if err1 != nil || err2 != nil || err3 != nil {
+			log.Printf("[!] Failed to load mTLS certificates. CA:%v Cert:%v Key:%v", err1, err2, err3)
+		} else {
+			var allowedSpiffe []string
+			if *mtlsAllowedSpiffeFlag != "" {
+				for _, id := range strings.Split(*mtlsAllowedSpiffeFlag, ",") {
+					allowedSpiffe = append(allowedSpiffe, strings.TrimSpace(id))
+				}
+			}
+			mtlsServer := &proxy.MTLSServer{
+				ListenPort:       *mtlsPortFlag,
+				TargetPort:       *mtlsTargetFlag,
+				CACert:           caCert,
+				ServerCert:       srvCert,
+				ServerKey:        srvKey,
+				AllowedSPIFFEIDs: allowedSpiffe,
+			}
+			if err := mtlsServer.Start(); err != nil {
+				log.Fatalf("[!] Failed to start mTLS Proxy: %v", err)
+			}
+		}
+	}
+
 	// Start output mechanisms based on mode
 	if *fleetUrlFlag != "" {
 		// Fleet Mode: Send data to central server
@@ -203,7 +243,7 @@ func main() {
 		phantomObjs, egressObjs := agentInstance.GetEBPFObjects()
 
 		webdashServer := webdash.NewServer(
-			8080,
+			9999,
 			dashboardChan,
 			phantomObjs,
 			egressObjs,

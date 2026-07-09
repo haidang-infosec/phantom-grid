@@ -1,6 +1,7 @@
 package spa
 
 import (
+	"net"
 	"crypto/ed25519"
 	"crypto/rand"
 	"testing"
@@ -34,7 +35,7 @@ func TestVerifyPacket_AsymmetricMode_Valid(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -50,7 +51,7 @@ func TestVerifyPacket_AsymmetricMode_Valid(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Verification failed with error: %v", err)
 	}
@@ -72,7 +73,7 @@ func TestVerifyPacket_AsymmetricMode_InvalidSignature(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -91,7 +92,7 @@ func TestVerifyPacket_AsymmetricMode_InvalidSignature(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for invalid signature")
 	}
@@ -113,7 +114,7 @@ func TestVerifyPacket_AsymmetricMode_InvalidTOTP(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -133,7 +134,7 @@ func TestVerifyPacket_AsymmetricMode_InvalidTOTP(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for invalid TOTP")
 	}
@@ -151,7 +152,7 @@ func TestVerifyPacket_DynamicMode_Valid(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true)
+	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -167,7 +168,7 @@ func TestVerifyPacket_DynamicMode_Valid(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Verification failed with error: %v", err)
 	}
@@ -185,7 +186,7 @@ func TestVerifyPacket_DynamicMode_InvalidHMAC(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true)
+	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -205,7 +206,7 @@ func TestVerifyPacket_DynamicMode_InvalidHMAC(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for invalid HMAC")
 	}
@@ -224,7 +225,7 @@ func TestVerifyPacket_InvalidVersion(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(invalidPacket)
+	valid, err := verifier.VerifyPacket(invalidPacket, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for invalid version")
 	}
@@ -247,7 +248,7 @@ func TestVerifyPacket_OldTimestamp(t *testing.T) {
 
 	// Create packet with old timestamp (manually construct)
 	oldTimestamp := time.Now().Unix() - 400 // 400 seconds ago (more than 5 minutes)
-	packet := make([]byte, SPAPacketHeaderSize)
+	packet := make([]byte, SPAPacketHeaderSizeV2)
 	packet[0] = 1 // Version
 	packet[1] = 2 // Mode: Asymmetric
 	// Set old timestamp
@@ -286,7 +287,7 @@ func TestVerifyPacket_OldTimestamp(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail due to old timestamp
-	valid, err := verifier.VerifyPacket(packet)
+	valid, err := verifier.VerifyPacket(packet, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for old timestamp")
 	}
@@ -304,7 +305,7 @@ func TestVerifyPacket_TooShort(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(shortPacket)
+	valid, err := verifier.VerifyPacket(shortPacket, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for too short packet")
 	}
@@ -326,7 +327,7 @@ func TestVerifyPacket_MissingPublicKey(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create valid packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
@@ -342,7 +343,7 @@ func TestVerifyPacket_MissingPublicKey(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(packetData)
+	valid, err := verifier.VerifyPacket(packetData, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for missing public key")
 	}
@@ -393,7 +394,7 @@ func TestVerifyPacket_UnsupportedMode(t *testing.T) {
 	verifier := NewVerifier(spaConfig)
 
 	// Verify packet - should fail
-	valid, err := verifier.VerifyPacket(invalidPacket)
+	valid, err := verifier.VerifyPacket(invalidPacket, net.ParseIP("192.168.1.100"))
 	if err == nil {
 		t.Error("Expected error for unsupported mode")
 	}

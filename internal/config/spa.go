@@ -28,11 +28,16 @@ type DynamicSPAConfig struct {
 	TOTPSecret      []byte // Shared secret for TOTP (32 bytes recommended)
 
 	// Ed25519 Configuration (for asymmetric mode)
-	PublicKey  ed25519.PublicKey  // Server public key (32 bytes)
-	PrivateKey ed25519.PrivateKey // Client private key (64 bytes) - only for key generation
+	PublicKey  ed25519.PublicKey   // Client uses this (single key)
+	PrivateKey ed25519.PrivateKey  // Client private key
+	PublicKeys []ed25519.PublicKey // Server uses this (multiple keys)
 
 	// HMAC Configuration (for dynamic mode)
-	HMACSecret []byte // Shared secret for HMAC-SHA256 (32 bytes)
+	HMACSecret  []byte   // Client uses this
+	HMACSecrets [][]byte // Server uses this
+
+	// Multi-user TOTP Configuration
+	TOTPSecrets [][]byte // Server uses this to check multiple TOTPs
 
 	// Anti-Replay Configuration
 	ReplayWindowSeconds int // Replay protection window (default: 60)

@@ -3,6 +3,7 @@ package spa
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"net"
 	"testing"
 	"time"
 )
@@ -19,13 +20,13 @@ func TestCreateAsymmetricPacket(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create packet
-	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData, err := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
 
 	// Verify packet structure
-	if len(packetData) < SPAPacketHeaderSize+Ed25519SignatureSize {
+	if len(packetData) < SPAPacketHeaderSizeV2+Ed25519SignatureSize {
 		t.Errorf("Packet too short: %d bytes", len(packetData))
 	}
 
@@ -36,8 +37,8 @@ func TestCreateAsymmetricPacket(t *testing.T) {
 	}
 
 	// Verify packet fields
-	if packet.Version != 1 {
-		t.Errorf("Expected version 1, got %d", packet.Version)
+	if packet.Version != 2 {
+		t.Errorf("Expected version 2, got %d", packet.Version)
 	}
 
 	if packet.Mode != 2 {
@@ -69,13 +70,13 @@ func TestCreateDynamicPacket(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create packet
-	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true)
+	packetData, err := CreateDynamicPacket(hmacSecret, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 	if err != nil {
 		t.Fatalf("Failed to create packet: %v", err)
 	}
 
 	// Verify packet structure
-	if len(packetData) < SPAPacketHeaderSize+HMACSignatureSize {
+	if len(packetData) < SPAPacketHeaderSizeV2+HMACSignatureSize {
 		t.Errorf("Packet too short: %d bytes", len(packetData))
 	}
 
@@ -86,8 +87,8 @@ func TestCreateDynamicPacket(t *testing.T) {
 	}
 
 	// Verify packet fields
-	if packet.Version != 1 {
-		t.Errorf("Expected version 1, got %d", packet.Version)
+	if packet.Version != 2 {
+		t.Errorf("Expected version 2, got %d", packet.Version)
 	}
 
 	if packet.Mode != 1 {
@@ -137,13 +138,13 @@ func TestPacketObfuscation(t *testing.T) {
 	rand.Read(totpSecret)
 
 	// Create packet with obfuscation
-	packetData1, _ := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
-	packetData2, _ := CreateAsymmetricPacket(privateKey, totpSecret, 30, true)
+	packetData1, _ := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
+	packetData2, _ := CreateAsymmetricPacket(privateKey, totpSecret, 30, true, net.ParseIP("192.168.1.100"))
 
 	// Packets should have different padding (high probability)
 	if len(packetData1) == len(packetData2) {
 		// Check if padding is different
-		headerSize := SPAPacketHeaderSize
+		headerSize := SPAPacketHeaderSizeV2
 		sigSize := Ed25519SignatureSize
 		padding1 := packetData1[headerSize : len(packetData1)-sigSize]
 		padding2 := packetData2[headerSize : len(packetData2)-sigSize]

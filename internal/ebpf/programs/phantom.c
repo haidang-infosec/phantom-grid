@@ -88,6 +88,14 @@ struct {
     __type(value, __be16);
 } redirect_map SEC(".maps");
 
+static __always_inline void csum_replace2(__sum16 *sum, __be16 old_val, __be16 new_val) {
+    __u32 csum = ~(*sum) & 0xFFFF;
+    csum += (~old_val & 0xFFFF) + (new_val & 0xFFFF);
+    csum = (csum & 0xFFFF) + (csum >> 16);
+    csum = (csum & 0xFFFF) + (csum >> 16);
+    *sum = ~csum;
+}
+
 static __always_inline void mutate_os_personality(struct iphdr *ip, struct tcphdr *tcp) {
     __u16 src_port = bpf_ntohs(tcp->source);
     __u8 os_type = (src_port % 4);
@@ -106,13 +114,15 @@ static __always_inline void mutate_os_personality(struct iphdr *ip, struct tcphd
     }
     
     if (old_ttl != new_ttl) {
+        __be16 old_word = bpf_htons(old_ttl << 8);
+        __be16 new_word = bpf_htons(new_ttl << 8);
+        csum_replace2(&ip->check, old_word, new_word);
         ip->ttl = new_ttl;
-        ip->check = 0; // Kernel will recalculate checksum
     }
     
     if (old_window != new_window) {
+        csum_replace2(&tcp->check, old_window, new_window);
         tcp->window = new_window;
-        tcp->check = 0; // Kernel will recalculate checksum
     }
     
     __u32 key = 0;
@@ -148,11 +158,12 @@ static __always_inline int verify_magic_packet(void *payload, void *data_end) {
     unsigned char *p = (unsigned char *)payload;
     const unsigned char *t = (const unsigned char *)token;
     
+    int diff = 0;
     #pragma clang loop unroll(full)
     for (int i = 0; i < SPA_TOKEN_LEN; i++) {
-        if (p[i] != t[i]) return 0;
+        diff |= (p[i] ^ t[i]);
     }
-    return 1;
+    return (diff == 0);
 }
 
 static __always_inline void spa_whitelist_ip(__be32 src_ip) {
@@ -272,10 +283,11 @@ int phantom_prog(struct xdp_md *ctx) {
         __u64 *val = bpf_map_lookup_elem(&attack_stats, &key);
         if (val) __sync_fetch_and_add(val, 1);
 
+        __be16 old_port = tcp->dest;
         __be16 new_port = bpf_htons(HONEYPOT_PORT);
         
+        csum_replace2(&tcp->check, old_port, new_port);
         tcp->dest = new_port;
-        tcp->check = 0; // Kernel will recalculate checksum
         
         mutate_os_personality(ip, tcp);
         

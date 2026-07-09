@@ -1,6 +1,7 @@
 package spa
 
 import (
+	"crypto/subtle"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -197,7 +198,7 @@ func (h *Handler) processPacket(packetData []byte, clientIP net.IP) {
 	}
 
 	// Verify packet
-	valid, err := h.verifier.VerifyPacket(packetData)
+	valid, err := h.verifier.VerifyPacket(packetData, clientIP)
 	if !valid {
 		errMsg := fmt.Sprintf("[SPA] Invalid packet from %s: %v", clientIP, err)
 		fmt.Printf("%s\n", errMsg)
@@ -236,7 +237,7 @@ func (h *Handler) processPacket(packetData []byte, clientIP net.IP) {
 
 // isStaticPacket checks if packet is legacy static token
 func (h *Handler) isStaticPacket(data []byte) bool {
-	// Static token is ASCII string, dynamic packet starts with version byte (1)
+	// Static token is ASCII string, dynamic packet starts with version byte (1 or 2)
 	staticTokenBytes := []byte(h.staticToken)
 	
 	// Check length first
@@ -244,18 +245,13 @@ func (h *Handler) isStaticPacket(data []byte) bool {
 		return false
 	}
 	
-	// Check if it's a dynamic packet (starts with version byte 1)
-	if len(data) > 0 && data[0] == 1 {
+	// Check if it's a dynamic packet (starts with version byte 1 or 2)
+	if len(data) > 0 && (data[0] == 1 || data[0] == 2) {
 		return false
 	}
 	
-	// Compare bytes
-	for i := 0; i < len(data); i++ {
-		if data[i] != staticTokenBytes[i] {
-			return false
-		}
-	}
-	return true
+	// Use constant time comparison to prevent timing attacks
+	return subtle.ConstantTimeCompare(data, staticTokenBytes) == 1
 }
 
 // GetClientIPFromPacket extracts client IP from packet (for logging)

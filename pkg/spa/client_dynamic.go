@@ -17,13 +17,15 @@ type DynamicClient struct {
 	HMACSecret      []byte             // For dynamic mode
 	TOTPSecret      []byte             // Shared TOTP secret
 	SPAConfig       *config.DynamicSPAConfig
+	ClientIP        net.IP             // IP to bind to the packet
 }
 
 // NewDynamicClient creates a new dynamic SPA client
-func NewDynamicClient(serverIP string, spaConfig *config.DynamicSPAConfig) (*DynamicClient, error) {
+func NewDynamicClient(serverIP string, spaConfig *config.DynamicSPAConfig, clientIP net.IP) (*DynamicClient, error) {
 	client := &DynamicClient{
 		ServerIP:  serverIP,
 		SPAConfig: spaConfig,
+		ClientIP:  clientIP,
 	}
 
 	// Set secrets based on mode
@@ -67,6 +69,7 @@ func (c *DynamicClient) SendMagicPacket() error {
 			c.TOTPSecret,
 			c.SPAConfig.TOTPTimeStep,
 			c.SPAConfig.EnableObfuscation,
+			c.ClientIP,
 		)
 		if createErr != nil {
 			return fmt.Errorf("failed to create asymmetric packet: %w", createErr)
@@ -78,6 +81,7 @@ func (c *DynamicClient) SendMagicPacket() error {
 			c.TOTPSecret,
 			c.SPAConfig.TOTPTimeStep,
 			c.SPAConfig.EnableObfuscation,
+			c.ClientIP,
 		)
 		if createErr != nil {
 			return fmt.Errorf("failed to create dynamic packet: %w", createErr)

@@ -16,7 +16,7 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	portFlag := flag.Int("port", 8080, "Port for the Fleet Manager dashboard")
+	portFlag := flag.Int("port", 9999, "Port for the Fleet Manager dashboard")
 	helpFlag := flag.Bool("h", false, "Show help message")
 
 	flag.Parse()

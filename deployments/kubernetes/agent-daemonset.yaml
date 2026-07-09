@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: phantom-grid-agent
+  namespace: kube-system
+  labels:
+    app: phantom-grid
+    component: agent
+spec:
+  selector:
+    matchLabels:
+      app: phantom-grid
+      component: agent
+  template:
+    metadata:
+      labels:
+        app: phantom-grid
+        component: agent
+    spec:
+      hostNetwork: true
+      containers:
+      - name: phantom-agent
+        image: phantom-grid:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+              - NET_ADMIN
+              - BPF
+        env:
+          - name: INTERFACE
+            value: "eth0"
+          - name: FLEET_URL
+            value: "http://phantom-grid-fleet.kube-system.svc.cluster.local:9999"
+        volumeMounts:
+          - name: lib-modules
+            mountPath: /lib/modules
+            readOnly: true
+          - name: bpf-fs
+            mountPath: /sys/fs/bpf
+      volumes:
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+        - name: bpf-fs
+          hostPath:
+            path: /sys/fs/bpf

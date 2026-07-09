@@ -1,0 +1,16 @@
+[Unit]
+Description=Phantom Grid Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/phantom
+ExecStart=/usr/local/bin/phantom-grid -spa-mode asymmetric -spa-key-dir /etc/phantom/keys
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target
