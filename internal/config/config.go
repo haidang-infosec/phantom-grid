@@ -1,8 +1,9 @@
 package config
 
 // SPA Configuration
+var SPAMagicPort = 1337
+
 const (
-	SPAMagicPort         = 1337
 	SPASecretToken       = "PHANTOM_GRID_SPA_2025"
 	SPATokenLen          = 21
 	SPAWhitelistDuration = 30

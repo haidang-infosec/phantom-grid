@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"encoding/json"
+	"log/slog"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -14,17 +15,14 @@ type AttackLog struct {
 	RiskLevel  string `json:"risk_level"`
 }
 
-// LogChannel is a channel for sending log messages
-var LogChannel = make(chan string, 100)
+var (
+	LogChannel = make(chan string, 100)
+	
+	once       sync.Once
+	auditLogger *slog.Logger
+)
 
-// LogAttack writes a structured AttackLog entry to disk
-func LogAttack(ip string, cmd string) {
-	entry := AttackLog{
-		Timestamp:  time.Now().Format(time.RFC3339),
-		AttackerIP: ip,
-		Command:    cmd,
-		RiskLevel:  "HIGH",
-	}
+func initAuditLogger() {
 	if err := os.MkdirAll("logs", 0o755); err != nil {
 		return
 	}
@@ -32,9 +30,22 @@ func LogAttack(ip string, cmd string) {
 	if err != nil {
 		return
 	}
-	defer file.Close()
-	if err := json.NewEncoder(file).Encode(entry); err != nil {
-		_ = err
-	}
+	
+	// Use slog with JSON handler for high-performance structured logging
+	handler := slog.NewJSONHandler(file, nil)
+	auditLogger = slog.New(handler)
 }
 
+// LogAttack writes a structured AttackLog entry to disk
+func LogAttack(ip string, cmd string) {
+	once.Do(initAuditLogger)
+	
+	if auditLogger != nil {
+		auditLogger.Info("TRAP_HIT",
+			slog.String("timestamp", time.Now().Format(time.RFC3339)),
+			slog.String("src_ip", ip),
+			slog.String("command", cmd),
+			slog.String("risk_level", "HIGH"),
+		)
+	}
+}

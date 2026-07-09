@@ -7,10 +7,12 @@ import (
 	"log"
 	"os"
 	"strings"
+	"os/signal"
+	"syscall"
 
 	"phantom-grid/internal/agent"
 	"phantom-grid/internal/config"
-	"phantom-grid/internal/dashboard"
+	"phantom-grid/internal/webdash"
 )
 
 func main() {
@@ -41,6 +43,10 @@ func main() {
 	elkPassFlag := flag.String("elk-pass", "", "Elasticsearch password (optional)")
 	elkTLSFlag := flag.Bool("elk-tls", false, "Enable TLS for Elasticsearch")
 	elkSkipVerifyFlag := flag.Bool("elk-skip-verify", false, "Skip TLS certificate verification")
+	
+	// Fleet Configuration
+	fleetUrlFlag := flag.String("fleet-url", "", "URL of the central Fleet Manager (e.g. http://10.0.0.1:8080). If set, Web Dashboard runs in Agent mode.")
+	agentIdFlag := flag.String("agent-id", "Phantom-Node-Alpha", "Unique ID for this agent in the Fleet")
 	
 	// SPA Configuration flags
 	spaModeFlag := flag.String("spa-mode", "static", "SPA mode: 'static', 'dynamic', or 'asymmetric'")
@@ -184,23 +190,34 @@ func main() {
 		log.Fatalf("[!] Failed to start agent: %v", err)
 	}
 
-	// Start dashboard only if enabled
-	if outputMode == config.OutputModeDashboard || outputMode == config.OutputModeBoth {
-		// Get eBPF objects for dashboard
+	// Start output mechanisms based on mode
+	if *fleetUrlFlag != "" {
+		// Fleet Mode: Send data to central server
+		phantomObjs, _ := agentInstance.GetEBPFObjects()
+		
+		fleetClient := agent.NewFleetClient(*fleetUrlFlag, *agentIdFlag, phantomObjs, dashboardChan)
+		fleetClient.Start()
+		log.Printf("[SYSTEM] Running in Fleet Mode. Pushing telemetry to %s", *fleetUrlFlag)
+	} else if outputMode == config.OutputModeDashboard || outputMode == config.OutputModeBoth {
+		// Local Standalone Mode: Run Web Dashboard
 		phantomObjs, egressObjs := agentInstance.GetEBPFObjects()
 
-		// Start dashboard
-		dashboardInstance := dashboard.New(
-			agentInstance.GetInterfaceName(),
+		webdashServer := webdash.NewServer(
+			8080,
+			dashboardChan,
 			phantomObjs,
 			egressObjs,
-			dashboardChan,
 		)
-		dashboardInstance.Start()
+		webdashServer.Start()
 	} else {
-		// ELK-only mode: wait for interrupt
+		// ELK-only mode
 		log.Printf("[SYSTEM] Running in ELK-only mode. Press Ctrl+C to stop.")
 		fmt.Println("[SYSTEM] Logs are being sent to Elasticsearch. No dashboard will be displayed.")
-		select {} // Block forever
 	}
+
+	// Wait for interrupt signal for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+	log.Println("[SYSTEM] Shutting down Phantom Grid agent...")
 }

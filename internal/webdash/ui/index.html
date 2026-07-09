@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Grid Security Platform</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                </div>
+                <h2>Phantom Grid</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-section">OVERVIEW</div>
+                <a href="#" class="nav-item active" data-target="view-dashboard">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-target="view-threats">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                    Threat Intelligence
+                </a>
+                
+                <div class="nav-section mt-4">MANAGEMENT</div>
+                <a href="#" class="nav-item" data-target="view-policies">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Security Policies
+                </a>
+                <a href="#" class="nav-item" data-target="view-settings">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    System Settings
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="system-health">
+                    <div class="health-indicator pulse-green"></div>
+                    <div class="health-details">
+                        <span class="health-title">System Health</span>
+                        <span class="health-uptime" id="system-uptime">Uptime: 00:00:00</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Threat Intelligence Marquee -->
+            <div class="intel-marquee">
+                <div class="marquee-content">
+                    <span class="intel-item"><span class="badge badge-danger">CVE-2024-38077</span> Windows Remote Desktop Licensing RCE</span>
+                    <span class="intel-item"><span class="badge badge-warning">ALERT</span> Increase in SSH Brute-force originating from AS45090</span>
+                    <span class="intel-item"><span class="badge badge-info">UPDATE</span> Phantom eBPF Signatures updated successfully</span>
+                    <span class="intel-item"><span class="badge badge-danger">CVE-2024-4577</span> PHP CGI Argument Injection vulnerability actively exploited</span>
+                </div>
+            </div>
+
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" placeholder="Search events, IP addresses, or policies (Press '/' to focus)">
+                </div>
+                <div class="topbar-right">
+                    <div class="agent-selector" style="margin-right: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Node:</span>
+                        <select id="agent-select" class="form-control" style="padding: 0.4rem; font-size: 0.85rem; background: rgba(0,0,0,0.3);">
+                            <option value="">Local Agent (Default)</option>
+                        </select>
+                    </div>
+
+                    <div class="notification-wrapper">
+                        <button class="icon-btn" id="notif-btn">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="notification-dot"></span>
+                        </button>
+                        <div class="notif-dropdown panel glass-effect" id="notif-dropdown">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <span class="badge badge-info">2 New</span>
+                            </div>
+                            <div class="notif-list">
+                                <div class="notif-item unread">
+                                    <div class="notif-icon text-warning"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                                    <div class="notif-content">
+                                        <p>High rate of SSH failed auths from 45.33.x.x</p>
+                                        <span class="notif-time">2 mins ago</span>
+                                    </div>
+                                </div>
+                                <div class="notif-item unread">
+                                    <div class="notif-icon text-info"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>
+                                    <div class="notif-content">
+                                        <p>System update completed</p>
+                                        <span class="notif-time">1 hour ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notif-footer">
+                                <a href="#">Mark all as read</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-profile dropdown-trigger">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=2563eb&color=fff&rounded=true&bold=true" alt="User" class="avatar" id="user-avatar">
+                        <span id="username-display" style="font-weight: 500; font-size: 0.85rem; margin-left: 0.5rem; color: #fff;">Admin</span>
+                        <button id="btn-logout" class="btn-outline-small text-danger" style="margin-left: 1rem;">Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section active">
+                <!-- Top Key Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card panel">
+                        <div class="metric-header">
+                            <span class="metric-title">Packets Dropped (XDP)</span>
+                            <div class="metric-icon text-danger"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
+                        </div>
+                        <div class="metric-value counter" id="stat-dropped">0</div>
+                        <div class="metric-trend text-muted"><span class="text-danger">↑ Hardware block</span></div>
+                    </div>
+                    
+                    <div class="metric-card panel">
+                        <div class="metric-header">
+                            <span class="metric-title">SPA Valid Tokens</span>
+                            <div class="metric-icon text-success"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+                        </div>
+                        <div class="metric-value counter" id="stat-auth-success">0</div>
+                        <div class="metric-trend text-muted"><span class="text-success">Authorized connections</span></div>
+                    </div>
+
+                    <div class="metric-card panel">
+                        <div class="metric-header">
+                            <span class="metric-title">SPA Failed Attempts</span>
+                            <div class="metric-icon text-warning"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+                        </div>
+                        <div class="metric-value counter text-warning" id="stat-auth-failed">0</div>
+                        <div class="metric-trend text-muted">Intrusion attempts</div>
+                    </div>
+
+                    <div class="metric-card panel">
+                        <div class="metric-header">
+                            <span class="metric-title">Active Honeypots</span>
+                            <div class="metric-icon text-primary"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></div>
+                        </div>
+                        <div class="metric-value">4</div>
+                        <div class="metric-trend text-muted"><span class="text-primary">Mirage Engine Online</span></div>
+                    </div>
+                </div>
+
+                <!-- Map & Advanced Charts -->
+                <div class="map-grid">
+                    <!-- Geo IP Threat Map -->
+                    <div class="map-section panel">
+                        <div class="panel-header">
+                            <h2>Live Global Threats</h2>
+                            <span class="badge badge-outline">Real-time</span>
+                        </div>
+                        <div id="world-map" class="map-container"></div>
+                    </div>
+
+                    <!-- Gauges -->
+                    <div class="gauges-section">
+                        <div class="gauge-card panel">
+                            <div class="panel-header">
+                                <h2>eBPF Mitigation</h2>
+                            </div>
+                            <div class="gauge-container">
+                                <canvas id="mitigationGauge"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value">99.9%</span>
+                                    <span class="gauge-desc">Block Rate</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">SPA Success</div>
+                            <div class="stat-value text-success" id="stat-auth-success">0</div>
+                            <div class="stat-desc">Whitelisted via Magic Packet</div>
+                        </div>
+                        <div class="gauge-card panel">
+                            <div class="panel-header">
+                                <h2>System Load</h2>
+                            </div>
+                            <div class="gauge-container">
+                                <canvas id="loadGauge"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value text-success" id="cpu-load-val">12%</span>
+                                    <span class="gauge-desc">CPU Usage</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs & Traffic Chart -->
+                <div class="bottom-grid">
+                    <!-- Traffic Chart -->
+                    <div class="traffic-section panel">
+                        <div class="panel-header">
+                            <h2>Network Traffic Analysis</h2>
+                            <div class="segmented-control">
+                                <button class="active">Live</button>
+                                <button>1h</button>
+                                <button>24h</button>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="trafficChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Logs Table -->
+                    <div class="logs-section panel">
+                        <div class="panel-header">
+                            <h2>Security Event Log</h2>
+                            <div class="log-actions">
+                                <input type="text" id="log-filter" placeholder="Filter logs..." class="form-control-small">
+                                <button id="export-logs" class="btn-outline-small">Export CSV</button>
+                                <button id="clear-logs" class="btn-outline-small text-danger">Clear</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table" id="events-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Source IP</th>
+                                        <th>Target</th>
+                                        <th>Event Description</th>
+                                        <th>Severity</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-table-body">
+                                    <!-- Logs populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="view-section">
+                <div class="view-header-row">
+                    <div>
+                        <h1>System Configuration</h1>
+                        <p class="text-muted">Manage Phantom Grid core settings and eBPF policies.</p>
+                    </div>
+                    <button id="save-settings" class="btn-primary">Apply Configuration</button>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-card panel glass-effect">
+                        <div class="card-title-row">
+                            <div class="icon-box"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div>
+                            <h2>Core Settings</h2>
+                        </div>
+                        <div class="form-group">
+                            <label>Agent Identifier</label>
+                            <input type="text" id="set-agent-id" class="form-control" value="Phantom-Node-Alpha">
+                        </div>
+                        <div class="form-group toggle-group">
+                            <div>
+                                <label>Mirage Engine (Honeypot)</label>
+                                <span class="help-text">Enable dynamic deceptive services to trap attackers.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="set-mirage" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Log Rotation Policy</label>
+                            <select id="set-log-rot" class="form-control">
+                                <option value="100MB">Size-based (100MB limit)</option>
+                                <option value="Daily">Daily Rotation</option>
+                                <option value="Weekly">Weekly Rotation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-card panel glass-effect">
+                        <div class="card-title-row">
+                            <div class="icon-box"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                            <h2>Network & eBPF</h2>
+                        </div>
+                        <div class="form-group">
+                            <label>Protected Interface</label>
+                            <input type="text" id="set-interface" class="form-control" value="eth0" disabled>
+                            <span class="help-text">Auto-detected hardware interface.</span>
+                        </div>
+                        <div class="form-group toggle-group">
+                            <div>
+                                <label>Stealth Mode (Drop silently)</label>
+                                <span class="help-text">Drop unauthorized packets without sending TCP RST.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="set-stealth" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>eBPF State Map Timeout (Seconds)</label>
+                            <input type="number" id="set-ebpf-timeout" class="form-control" value="3600">
+                        </div>
+                    </div>
+
+                    <div class="settings-card panel glass-effect">
+                        <div class="card-title-row">
+                            <div class="icon-box"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                            <h2>Single Packet Auth (SPA)</h2>
+                        </div>
+                        <div class="form-group">
+                            <label>Trigger Port</label>
+                            <input type="number" id="set-spa-port" class="form-control" value="62201">
+                        </div>
+                        <div class="form-group">
+                            <label>Session Whitelist TTL (Seconds)</label>
+                            <input type="number" id="set-spa-ttl" class="form-control" value="300">
+                        </div>
+                        <div class="form-group">
+                            <label>TOTP Clock Skew Tolerance (Seconds)</label>
+                            <input type="number" id="set-spa-skew" class="form-control" value="30">
+                        </div>
+                    </div>
+
+                    <div class="settings-card panel glass-effect">
+                        <div class="card-title-row">
+                            <div class="icon-box"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                            <h2>Account Security</h2>
+                        </div>
+                        <div class="form-group">
+                            <label>Old Password</label>
+                            <input type="password" id="old-pass" class="form-control" placeholder="Current password">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="new-pass" class="form-control" placeholder="New password">
+                        </div>
+                        <button id="btn-change-pass" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Change Password</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder Views -->
+            <div id="view-threats" class="view-section">
+                <div class="view-header-row">
+                    <h1>Threat Intelligence Feed</h1>
+                </div>
+                <div class="panel glass-effect p-4 mt-4">
+                    <p class="text-muted">Connecting to Phantom Threat Network...</p>
+                </div>
+            </div>
+            <div id="view-policies" class="view-section">
+                <div class="view-header-row">
+                    <h1>Security Policies</h1>
+                </div>
+                <div class="panel glass-effect p-4 mt-4">
+                    <p class="text-muted">Loading eBPF filter rules...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

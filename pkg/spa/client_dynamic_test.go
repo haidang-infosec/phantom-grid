@@ -152,13 +152,13 @@ func TestSendMagicPacket_AsymmetricMode(t *testing.T) {
 	}
 
 	// Override server port for testing
-	client.ServerIP = net.JoinHostPort("127.0.0.1", string(rune(serverPort)))
+	originalPort := config.SPAMagicPort
+	config.SPAMagicPort = serverPort
+	defer func() { config.SPAMagicPort = originalPort }()
 
 	// Send packet in goroutine
 	done := make(chan error, 1)
 	go func() {
-		// Temporarily override SPAMagicPort for testing
-		// This is a workaround - in real code, we'd need to make the port configurable
 		done <- client.SendMagicPacket()
 	}()
 
@@ -230,6 +230,12 @@ func TestSendMagicPacket_DynamicMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
+
+	// Override server port for testing
+	serverPort := serverConn.LocalAddr().(*net.UDPAddr).Port
+	originalPort := config.SPAMagicPort
+	config.SPAMagicPort = serverPort
+	defer func() { config.SPAMagicPort = originalPort }()
 
 	// Send packet in goroutine
 	done := make(chan error, 1)

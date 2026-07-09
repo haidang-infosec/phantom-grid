@@ -199,39 +199,8 @@ func generateTOTPSecret() {
 		}
 	}
 
-	// Generate secret using script or openssl
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		// Use PowerShell script
-		scriptPath := "./scripts/generate-totp-secret.ps1"
-		if _, err := os.Stat(scriptPath); err == nil {
-			cmd = exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", scriptPath, secretPath)
-		} else {
-			// Fallback: use Go to generate
-			generateTOTPSecretGo(secretPath)
-			return
-		}
-	} else {
-		// Use shell script
-		scriptPath := "./scripts/generate-totp-secret.sh"
-		if _, err := os.Stat(scriptPath); err == nil {
-			cmd = exec.Command("bash", scriptPath, secretPath)
-		} else {
-			// Fallback: use openssl
-			cmd = exec.Command("sh", "-c", fmt.Sprintf("openssl rand -base64 32 > %s && chmod 600 %s", secretPath, secretPath))
-		}
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		// Fallback to Go implementation
-		generateTOTPSecretGo(secretPath)
-	} else {
-		fmt.Println(menuColorGreen + "[+] TOTP secret generated successfully!" + menuColorReset)
-		fmt.Println(menuColorCyan + "[*] Secret saved to: " + secretPath + menuColorReset)
-	}
+	// Generate secret securely using Go's crypto/rand
+	generateTOTPSecretGo(secretPath)
 
 	pause()
 }

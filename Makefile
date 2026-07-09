@@ -16,6 +16,7 @@ generate: generate-config
 build: generate
 	@mkdir -p bin
 	cd cmd/agent && go build -o ../../bin/phantom-grid .
+	cd cmd/fleet && go build -o ../../bin/fleet .
 	cd cmd/spa-client && go build -o ../../bin/spa-client .
 	cd cmd/phantom && go build -o ../../bin/phantom .
 	@echo "Build complete: binaries in bin/"
@@ -53,10 +54,10 @@ fmt:
 lint:
 	go vet ./...
 
-test:
+test: generate
 	go test -v ./...
 
-test-coverage:
+test-coverage: generate
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"

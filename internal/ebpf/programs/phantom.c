@@ -122,7 +122,7 @@ static __always_inline void mutate_os_personality(struct iphdr *ip, struct tcphd
 
 static __always_inline int is_spa_whitelisted(__be32 src_ip) {
     __u64 *expiry = bpf_map_lookup_elem(&spa_whitelist, &src_ip);
-    if (expiry == NULL) {
+    if (!expiry) {
         return 0;
     }
     

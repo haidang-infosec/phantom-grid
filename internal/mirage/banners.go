@@ -1,8 +1,8 @@
 package mirage
 
 import (
-	"math/rand"
-	"time"
+	"crypto/rand"
+	"math/big"
 )
 
 // Banner database for The Mirage effect
@@ -53,33 +53,41 @@ var (
 	ServiceTypes = []string{"ssh", "http", "mysql", "redis", "ftp", "telnet"}
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
+// secureRandomInt returns a secure random integer in [0, max)
+func secureRandomInt(max int) int {
+	if max <= 0 {
+		return 0
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0
+	}
+	return int(n.Int64())
 }
 
 // GetRandomBanner returns a random banner for the given service type
 func GetRandomBanner(serviceType string) string {
 	switch serviceType {
 	case "ssh":
-		return SSHBanners[rand.Intn(len(SSHBanners))]
+		return SSHBanners[secureRandomInt(len(SSHBanners))]
 	case "http":
-		return HTTPBanners[rand.Intn(len(HTTPBanners))]
+		return HTTPBanners[secureRandomInt(len(HTTPBanners))]
 	case "mysql":
-		return MySQLBanners[rand.Intn(len(MySQLBanners))]
+		return MySQLBanners[secureRandomInt(len(MySQLBanners))]
 	case "redis":
-		return RedisBanners[rand.Intn(len(RedisBanners))]
+		return RedisBanners[secureRandomInt(len(RedisBanners))]
 	case "ftp":
-		return FTPBanners[rand.Intn(len(FTPBanners))]
+		return FTPBanners[secureRandomInt(len(FTPBanners))]
 	case "telnet":
-		return TelnetBanners[rand.Intn(len(TelnetBanners))]
+		return TelnetBanners[secureRandomInt(len(TelnetBanners))]
 	default:
-		return SSHBanners[rand.Intn(len(SSHBanners))]
+		return SSHBanners[secureRandomInt(len(SSHBanners))]
 	}
 }
 
 // SelectRandomService returns a random service type
 func SelectRandomService() string {
-	return ServiceTypes[rand.Intn(len(ServiceTypes))]
+	return ServiceTypes[secureRandomInt(len(ServiceTypes))]
 }
 
 // SelectServiceByPort selects service type based on port for realistic deception

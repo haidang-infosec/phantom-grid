@@ -1,8 +1,9 @@
 package honeypot
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net"
 	"strings"
 	"time"
@@ -24,6 +25,10 @@ func (h *Handler) handleSSH(conn net.Conn, remote, t string) {
 
 	buf := make([]byte, 4096)
 	for {
+		// Set deadline to prevent Slowloris resource exhaustion
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
+		
 		n, err := conn.Read(buf)
 		if err != nil || n == 0 {
 			return
@@ -50,7 +55,8 @@ func (h *Handler) handleSSH(conn net.Conn, remote, t string) {
 		args := parts[1:]
 
 		// Add small delay for realism
-		time.Sleep(time.Duration(50+rand.Intn(100)) * time.Millisecond)
+		randDelay, _ := rand.Int(rand.Reader, big.NewInt(100))
+		time.Sleep(time.Duration(50+randDelay.Int64()) * time.Millisecond)
 
 		switch cmd {
 		case "exit", "logout", "quit":
@@ -356,12 +362,16 @@ func (h *Handler) handleSSH(conn net.Conn, remote, t string) {
 			}
 
 		case "vi", "vim", "nano":
-			conn.Write([]byte(fmt.Sprintf("Opening %s in %s...\r\n", args[0], cmd)))
-			time.Sleep(200 * time.Millisecond)
-			conn.Write([]byte("Press 'q' to quit\r\n"))
-			// Wait for quit command
-			time.Sleep(1000 * time.Millisecond)
-			conn.Write([]byte(fmt.Sprintf("File saved: %s\r\n", args[0]) + prompt))
+			if len(args) > 0 {
+				conn.Write([]byte(fmt.Sprintf("Opening %s in %s...\r\n", args[0], cmd)))
+				time.Sleep(200 * time.Millisecond)
+				conn.Write([]byte("Press 'q' to quit\r\n"))
+				// Wait for quit command
+				time.Sleep(1000 * time.Millisecond)
+				conn.Write([]byte(fmt.Sprintf("File saved: %s\r\n", args[0]) + prompt))
+			} else {
+				conn.Write([]byte(fmt.Sprintf("%s: missing file operand\r\n", cmd) + prompt))
+			}
 
 		case "mysql":
 			conn.Write([]byte("Welcome to the MySQL monitor.  Commands end with ; or \\g.\r\n"))

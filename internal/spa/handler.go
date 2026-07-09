@@ -166,43 +166,7 @@ func (h *Handler) handlePackets() {
 func (h *Handler) processPacket(packetData []byte, clientIP net.IP) {
 	// Check if packet is static or dynamic
 	if h.isStaticPacket(packetData) {
-		// Legacy static token - whitelist IP in user-space
-		// Log that we detected a static packet
-		fmt.Printf("[SPA] Detected static packet from %s (length: %d, token length: %d)\n", clientIP, len(packetData), len(h.staticToken))
-		
-		if h.mapLoader == nil {
-			msg := fmt.Sprintf("[SPA] Static packet received but mapLoader not available")
-			fmt.Printf("%s\n", msg)
-			select {
-			case h.logChan <- msg:
-			default:
-			}
-			return
-		}
-		
-		// Whitelist IP for static SPA (use default duration)
-		duration := config.SPAWhitelistDuration
-		if h.spaConfig != nil && h.spaConfig.ReplayWindowSeconds > 0 {
-			duration = h.spaConfig.ReplayWindowSeconds
-		}
-		
-		fmt.Printf("[SPA] Attempting to whitelist IP %s for %d seconds...\n", clientIP, duration)
-		if err := h.mapLoader.WhitelistIP(clientIP, duration); err != nil {
-			msg := fmt.Sprintf("[SPA] Failed to whitelist IP %s for static SPA: %v", clientIP, err)
-			fmt.Printf("%s\n", msg)
-			select {
-			case h.logChan <- msg:
-			default:
-			}
-			return
-		}
-		
-		msg := fmt.Sprintf("[SPA] Successfully authenticated and whitelisted IP: %s (static token, length: %d)", clientIP, len(packetData))
-		fmt.Printf("%s\n", msg)
-		select {
-		case h.logChan <- msg:
-		default:
-		}
+		// Static packets are handled by eBPF, do nothing in user space
 		return
 	}
 	

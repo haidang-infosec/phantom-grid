@@ -32,6 +32,9 @@ func (h *Handler) handleMySQL(conn net.Conn, remote, t string) {
 	username := ""
 
 	for {
+		// Set deadline to prevent Slowloris resource exhaustion
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
 		n, err := conn.Read(buf)
 		if err != nil || n == 0 {
 			return

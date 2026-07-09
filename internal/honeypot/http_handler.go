@@ -12,6 +12,9 @@ import (
 // handleHTTP simulates professional HTTP server interaction
 func (h *Handler) handleHTTP(conn net.Conn, remote, t string) {
 	buf := make([]byte, 8192)
+	// Set deadline to prevent Slowloris resource exhaustion
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	n, err := conn.Read(buf)
 	if err != nil {
 		return

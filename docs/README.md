@@ -2,7 +2,7 @@
 
 Welcome to the Phantom Grid documentation. This guide will help you understand, install, configure, and use Phantom Grid effectively.
 
-## 📚 Documentation Index
+##  Documentation Index
 
 ### Getting Started
 
@@ -22,7 +22,7 @@ Welcome to the Phantom Grid documentation. This guide will help you understand, 
 - **[Development Guide](development.md)** - Contributing and development workflow
 - **[API Reference](api.md)** - Command-line interface and configuration reference
 
-## 🚀 Quick Links
+##  Quick Links
 
 ### For First-Time Users
 
@@ -42,7 +42,7 @@ Welcome to the Phantom Grid documentation. This guide will help you understand, 
 2. Understand [Architecture Overview](architecture.md)
 3. Check [API Reference](api.md)
 
-## 📖 Documentation Structure
+##  Documentation Structure
 
 ```
 docs/
@@ -58,7 +58,7 @@ docs/
 └── api.md                # API reference
 ```
 
-## 🎯 Documentation Goals
+##  Documentation Goals
 
 Our documentation aims to:
 
@@ -67,11 +67,11 @@ Our documentation aims to:
 - **Be Practical**: Provide real-world examples and use cases
 - **Be Maintained**: Keep up-to-date with the latest features
 
-## 🤝 Contributing to Documentation
+##  Contributing to Documentation
 
 Found an error or want to improve the documentation? See [Development Guide](development.md) for contribution guidelines.
 
-## 📝 Documentation Standards
+##  Documentation Standards
 
 - All code examples are tested and working
 - All commands are verified on supported platforms

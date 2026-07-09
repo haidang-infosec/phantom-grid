@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Grid - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #000000;
+            --primary: #5e6ad2;
+            --text-primary: #ededed;
+            --text-muted: #888888;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: radial-gradient(circle at 50% 50%, rgba(94, 106, 210, 0.1), transparent 50%);
+        }
+        .login-box {
+            background: rgba(10,10,10,0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .login-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        .logo-area {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .logo-area svg { color: var(--primary); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(94, 106, 210, 0.5));}
+        .logo-area h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.5px; }
+        
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-muted); }
+        .form-control {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.2); }
+        
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 1rem;
+        }
+        .btn-login:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .error-msg {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo-area">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            <h1>Phantom Grid</h1>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" class="form-control" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-control" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-login">Sign In</button>
+            <div class="error-msg" id="error-msg">Invalid credentials</div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('error-msg');
+            
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    err.style.display = 'block';
+                }
+            } catch(e) {
+                err.style.display = 'block';
+                err.innerText = "Connection error";
+            }
+        });
+    </script>
+</body>
+</html>
